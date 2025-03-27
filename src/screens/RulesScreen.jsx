@@ -1,11 +1,11 @@
 import React from "react";
 
-function RulesScreen() {
+function RulesScreen({ width = "50%" }) {
   return (
     <>
       <style>{style}</style>
       <section className="rules-section">
-        <div className="rules-container">
+        <div className="rules-container" style={{ width }}>
           <h2>COMPETITION RULES</h2>
           <ul>
             <li>

@@ -48,7 +48,7 @@ function App() {
       >
         <Routes>
           <Route path="/" element={<HomeScreen user={1} />} />
-          <Route path="/leaderboard" element={<LeaderBoardScreen user={1} />} />
+          {/* <Route path="/leaderboard" element={<LeaderBoardScreen user={1} />} /> */}
           <Route path="/rules" element={<RulesScreen />} />
           <Route path="/competition" element={<CompetitionScreen user={1} />} />
           <Route path="/profile" element={<ProfileScreen user={1} />} />

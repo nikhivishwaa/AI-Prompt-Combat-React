@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 const Navbar = ({ isAuthenticated }) => {
   const [menuActive, setMenuActive] = useState(false);
-
+  const route = useLocation();
+  console.log({ route });
   useEffect(() => {
     const handleOverlayClick = () => setMenuActive(false);
     document
@@ -17,7 +18,6 @@ const Navbar = ({ isAuthenticated }) => {
         );
     };
   }, []);
-  // useEffect(()=>{},[isAuthenticated])
 
   return (
     <>
@@ -135,13 +135,14 @@ const Navbar = ({ isAuthenticated }) => {
               Rules
             </Link>
 
-            <Link to="/challenge" className="link">
-              Competition
-            </Link>
-
-            <Link to="/leaderboard" className="link">
+            {route.path === "/competition" && route?.state?.challenge_id && (
+              <Link to="/challenge" className="link">
+                Competition
+              </Link>
+            )}
+            {/* <Link to="/leaderboard" className="link">
               Leaderboard
-            </Link>
+            </Link> */}
             <Link to="/contact" className="link">
               Contact
             </Link>
