@@ -4,28 +4,20 @@ import { EventProvider } from "../context/eventContext";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
 import { AuthProvider } from "../context/authContext";
+import R2Task from "../components/R2Task";
 import ReverseTimer from "../components/ReverseTimer";
 
 function Round1Screen({ closeTest }) {
   const [submit, setSubmit] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [lastTimout, setLastTimout] = useState(null);
   const { token } = AuthProvider();
-  const {
-    participant,
-    challenge,
-    round1,
-    setRound1,
-    allowRound1,
-    setAllowRound1,
-  } = EventProvider();
-  const [tabSwitch, setTabSwitch] = useState(0);
+  const { participant, challenge, round2, setRound2 } = EventProvider();
 
   useEffect(() => {
     async function getAllTask() {
       try {
         const apiUrl = import.meta.env.VITE_BACKEND;
-        const url = `${apiUrl}/challenge/${challenge.id}/round1/?participant=${participant.id}`;
+        const url = `${apiUrl}/challenge/${challenge.id}/round2/?participant=${participant.id}`;
 
         const response = await fetch(url, {
           method: "GET",
@@ -41,9 +33,9 @@ function Round1Screen({ closeTest }) {
 
         const data = await response.json();
 
-        secureLocalStorage.setItem("round1", JSON.stringify(data.data));
+        secureLocalStorage.setItem("round2", JSON.stringify(data.data));
         console.log(data);
-        setRound1(data.data);
+        setRound2(data.data);
       } catch (error) {
         console.error("Error while fetching tasks: ", error);
       } finally {
@@ -51,8 +43,10 @@ function Round1Screen({ closeTest }) {
       }
     }
 
-    setLoading(true);
-    getAllTask();
+    if (participant.round1_status === "qualified") {
+      setLoading(true);
+      getAllTask();
+    }
     const disableRightClick = (e) => e.preventDefault();
     const disableCopy = (e) => e.preventDefault();
     const disableCut = (e) => e.preventDefault();
@@ -63,9 +57,8 @@ function Round1Screen({ closeTest }) {
     document.addEventListener("cut", disableCut);
     document.addEventListener("paste", disablePaste);
 
-    setTimeout(closeTest, new Date(challenge.round1_end_ts) - new Date());
+    setTimeout(closeTest, new Date(challenge.round2_end_ts) - new Date());
     document.body.style.overflowY = "hidden";
-
     return () => {
       document.body.style.overflowY = "";
       document.removeEventListener("contextmenu", disableRightClick);
@@ -75,41 +68,8 @@ function Round1Screen({ closeTest }) {
     };
   }, []);
   useEffect(() => {
-    const handleVisibilityChange = (e) => {
-      e.stopPropagation();
-      if (tabSwitch > 2) {
-        return;
-      }
-      if (document.hidden) {
-        if (tabSwitch > 2) {
-          setAllowRound1(false);
-          secureLocalStorage.setItem("tabSwitch", tabSwitch);
-          secureLocalStorage.setItem("allowRound1", false);
-          setTimeout(() => {
-            endTask;
-            alert(
-              "Multiple Tab switch detected! Therefore your competition was ended!"
-            );
-          }, 1500);
-          return;
-        }
-        const upcomingWarning = setTimeout(() => {
-          setTabSwitch(tabSwitch + 1);
-          alert("Tab switch detected! Please stay on this page.");
-        }, 1000);
-        if (lastTimout) {
-          clearTimeout(lastTimout);
-          setLastTimout(upcomingWarning);
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    enableFullScreen();
-
-    return () =>
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [round1]);
+    // enableFullScreen();
+  }, [round2]);
 
   const enableFullScreen = () => {
     const element = document.documentElement;
@@ -136,21 +96,17 @@ function Round1Screen({ closeTest }) {
         }}
       >
         <div className="level-container">
-          {tabSwitch <= 2 ? (
-            <section className="prompt-card" id="prompt-card">
-              {round1.map((task, i) => (
-                <R1Task task={task} i={i + 1} key={i} />
-              ))}
-            </section>
-          ) : (
-            <h1 className="text-[28px] justify-self-center font-bold">
-              Your Round 1 is Forcefully Submitted, Due to Tabswitch
-            </h1>
-          )}
+          <section className="prompt-card" id="prompt-card">
+            {round2.map((task, i) => (
+              <R2Task task={task} i={i + 1} key={i} />
+            ))}
+          </section>
+
           <aside className="flex flex-col gap-1 sidebar-container self-start w-[94%] mr-auto">
-            <h2 className="title">Level 1: Prompt Writing</h2>
+            <h2 className="title">Level 2: Image Generation</h2>
             <p className="text-center description">
-              Write a detailed prompt based on the given conditions and submit.
+              Observe the reference image below and upload your generated image
+              that closely matches it.
             </p>
 
             <table className="table table-bordered table-hover">
@@ -161,7 +117,7 @@ function Round1Screen({ closeTest }) {
                 </tr>
               </thead>
               <tbody>
-                {round1.map((task, i) => (
+                {round2.map((task, i) => (
                   <tr key={i}>
                     <td>
                       <button onClick={() => {}}>Task # {i + 1}</button>
@@ -172,12 +128,13 @@ function Round1Screen({ closeTest }) {
               </tbody>
             </table>
             <div className="my-4">
-              <ReverseTimer stopAt={new Date(challenge.round1_end_ts) - 2000} />
+              <ReverseTimer stopAt={new Date(challenge.round2_end_ts) - 2000} />
             </div>
+
             <div className="flex justify-center mt-5">
               <button
                 onClick={closeTest}
-                className="register-btn w-fit-content mx-auto"
+                class="register-btn w-fit-content mx-auto"
               >
                 Close
               </button>
@@ -190,7 +147,32 @@ function Round1Screen({ closeTest }) {
 }
 
 const style = `
-th {
+.preview-patch {
+        background: #ffd700;
+        color: black;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 4px 10px;
+        box-shadow: 3px 2px 7px 0px #6767ec;
+        left: 2%;
+        top: 5%;
+        position: absolute;
+        z-index: 1000;
+    }
+
+    .preview-overlay {
+        top: 0;
+        background: linear-gradient(68deg, #0018ff2e, #ff777754);
+        height: 100%;
+        width: 100%;
+        position: absolute;
+        z-index: 500;
+        box-sizing: border-box;
+        border-radius: 12px;
+    }
+
+    th {
         height: 40px;
         vertical-align: center;
         /* text-align: center; */
@@ -372,8 +354,7 @@ th {
         box-shadow: 0 4px 8px rgba(0, 255, 255, 0.4);
         border: none;
         color: black;
-        cursor: pointer;
-        /* {% if challenge.round1_status == 'Finished' %} */
+        /* {% if challenge.round2_status == 'Finished' %} */
         cursor: not-allowed;
         /* {% endif %} */
     }
@@ -444,6 +425,167 @@ th {
         .btn-primary {
             font-size: 1rem;
             padding: 10px 14px;
+        }
+    }
+
+    /* Card Styling */
+    .upload-card {
+        background: rgba(20, 20, 20, 0.9);
+        padding: 25px;
+        /* Reduced padding */
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 255, 255, 0.3);
+        width: 60%;
+        /* Reduced width */
+        max-width: 450px;
+        /* Made it more compact */
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        animation: fadeIn 0.8s ease-in-out;
+    }
+
+    /* Hover Effect */
+    .upload-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 16px rgba(0, 255, 255, 0.4);
+    }
+
+    /* Title */
+    .title {
+        font-weight: bold;
+        margin-bottom: 15px;
+        font-size: 1.6rem;
+        /* Slightly smaller */
+        color: #00FFFF;
+    }
+
+    /* Description */
+    .description {
+        font-size: 1rem;
+        color: #00EEEE;
+        margin-bottom: 20px;
+    }
+
+    /* Reference Image */
+    .reference-img {
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+        /* margin-bottom: 15px; */
+        border: 2px solid #00FFFF;
+        padding: 4px;
+    }
+
+    /* Upload Box */
+    .upload-box {
+        margin: 15px 0;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #00FFFF;
+        font-size: 0.9rem;
+    }
+
+    /* File Input */
+    .file-input {
+        width: 100%;
+        border-radius: 6px;
+        border: 1px solid #00FFFF;
+        padding: 10px;
+        font-size: 0.9rem;
+        background: rgba(0, 255, 255, 0.1);
+        color: white;
+    }
+
+    .file-input:focus {
+        border-color: #00FFFF;
+        box-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+        outline: none;
+    }
+
+    /* Submit Button */
+    .submit-container {
+        margin-top: 10px;
+    }
+
+    .btn-primary {
+        padding: 10px 18px;
+        font-size: 1rem;
+        font-weight: bold;
+        background: #00FFFF;
+        border-radius: 6px;
+        transition: 0.3s ease-in-out;
+        box-shadow: 0 3px 6px rgba(0, 255, 255, 0.3);
+        border: none;
+        color: black;
+    }
+
+    .btn-primary:hover {
+        background: #00EEEE;
+        box-shadow: 0 0 8px #00FFFF;
+        transform: scale(1.05);
+    }
+
+    /* Fade-in Animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .upload-card {
+            width: 75%;
+            max-width: 400px;
+        }
+
+        .title {
+            font-size: 1.4rem;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+        }
+
+        .file-input {
+            font-size: 0.85rem;
+        }
+
+        .btn-primary {
+            font-size: 0.95rem;
+            padding: 8px 14px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .upload-card {
+            width: 85%;
+            max-width: 350px;
+        }
+
+        .title {
+            font-size: 1.3rem;
+        }
+
+        .form-label {
+            font-size: 0.8rem;
+        }
+
+        .file-input {
+            font-size: 0.8rem;
+            padding: 8px;
+        }
+
+        .btn-primary {
+            font-size: 0.9rem;
+            padding: 8px 12px;
         }
     }
 `;

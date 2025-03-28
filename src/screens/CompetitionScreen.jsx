@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
 import { EventProvider } from "../context/eventContext";
@@ -9,6 +9,7 @@ import axios from "axios";
 import CallbackRunner from "../components/CallbackRunner";
 import CountdownTimer from "../components/CountdownTimer";
 import Round1Screen from "./Round1Screen";
+import Round2Screen from "./Round2Screen";
 import Rounds from "../components/Rounds";
 
 const CompetitionScreen = () => {
@@ -25,41 +26,106 @@ const CompetitionScreen = () => {
   const [round2Status, setRound2Status] = useState(null);
   const [showRound1, setShowRound1] = useState(false);
   const [showRound2, setShowRound2] = useState(false);
+  const [r1Start, setR1Start] = useState(
+    new Date(route?.state?.detail.round1_start_ts).getTime()
+  );
+  const [r1End, setR1End] = useState(
+    new Date(route?.state?.detail.round1_end_ts).getTime()
+  );
+  const [r2Start, setR2Start] = useState(
+    new Date(route?.state?.detail.round2_start_ts).getTime()
+  );
+  const [r2End, setR2End] = useState(
+    new Date(route?.state?.detail.round2_end_ts).getTime()
+  );
+  const [timediff, setTimediff] = useState(0);
+  const [r1Completed, setR1Completed] = useState(false);
+  const [r2Completed, setR2Completed] = useState(false);
 
-  const getChallenge = async () => {
-    if (route?.state?.detail) {
-      setChallenge(route.state.detail);
-      secureLocalStorage.setItem("challenge", route.state.detail);
-    } else navigation("/");
-  };
   useEffect(() => {
-    if (isAuthenticated) {
-      console.log({ token });
-      setLoading(true);
-      getChallenge();
+    setLoading(true);
+    if (!isAuthenticated) navigation("/login");
+    if (route?.state?.detail) {
+      const { detail } = route.state;
+      setChallenge(detail);
+      secureLocalStorage.setItem("challenge", detail);
+      setTimeout(() => {
+        getStatus();
+        r1Start - now > 0 && setShowRound1(true);
+        console.log("r1Start");
+      }, 100);
       getParticipant();
-    } else navigation("/login");
+    } else navigation("/");
+
+    const challengeStatus = JSON.parse(
+      secureLocalStorage.getItem(`event${challenge.id}_${r1Start}`)
+    );
+    setR1Completed(challengeStatus?.r1Completed || false);
+    setR2Completed(challengeStatus?.r2Completed || false);
+    const now = new Date().getTime();
+    console.log("load");
+    const a = setTimeout(() => {
+      getStatus();
+      r1Start - now > 0 && setShowRound1(true);
+      console.log("r1Start");
+    }, r1Start - now + 100);
+    const b = setTimeout(() => {
+      getStatus();
+      setShowRound1(false);
+      console.log("r2Start");
+    }, r2Start - now + 100);
+    const c = setTimeout(
+      getParticipant,
+      r2Start - now - 10000 - Math.round(Math.random() * 10000)
+    );
+    const d = setTimeout(() => {
+      getStatus();
+      r2Start - now > 0 && setShowRound2(true);
+      console.log("r1End");
+    }, r1End - now + 100);
+    const e = setTimeout(() => {
+      getStatus();
+      setShowRound2(false);
+      console.log("r1End");
+    }, r1End - now + 100);
+    return () => {
+      secureLocalStorage.setItem(
+        `event${challenge.id}_${r1Start}`,
+        JSON.stringify({ r1Completed, r2Completed })
+      );
+      clearTimeout(a);
+      clearTimeout(b);
+      clearTimeout(c);
+      clearTimeout(d);
+      clearTimeout(e);
+    };
   }, []);
 
   const joinChallenge = async () => {
     const apiUrl = import.meta.env.VITE_BACKEND;
-    const response = await axios.post(
-      `${apiUrl}/challenge/${
-        challenge.id || route?.state?.challenge_id
-      }/participation`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    if (response.status === 201) {
-      setParticipant(response.data.data);
-      secureLocalStorage.setItem(
-        "participant",
-        JSON.stringify(response.data.data)
+    try {
+      const response = await fetch(
+        `${apiUrl}/challenge/${
+          challenge.id || route?.state?.challenge_id
+        }/participation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
+
+      if (response.ok) {
+        const data = await response.json();
+        setParticipant(data.data);
+        secureLocalStorage.setItem("participant", JSON.stringify(data.data));
+      } else {
+        console.error("Failed to join challenge:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error joining challenge:", error);
     }
   };
 
@@ -71,45 +137,51 @@ const CompetitionScreen = () => {
         return;
       }
 
-      const response = await axios.get(
-        `${apiUrl}/challenge/${
-          challenge.id || route?.state?.challenge_id
-        }/participation`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.status === 200) {
-        setParticipant(response.data.data);
-        secureLocalStorage.setItem(
-          "participant",
-          JSON.stringify(response.data.data)
+      try {
+        const response = await fetch(
+          `${apiUrl}/challenge/${
+            challenge.id || route?.state?.challenge_id
+          }/participation`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
+
+        if (response.ok) {
+          const data = await response.json();
+          setParticipant(data.data);
+          secureLocalStorage.setItem("participant", JSON.stringify(data.data));
+        } else {
+          console.error("Failed to fetch participant:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error fetching participant:", error);
       }
     }
     setLoading(false);
   };
 
-  useEffect(() => {
-    getStatus();
-  }, [loading, started, finished]);
+  // useEffect(() => {
+  //   // getStatus();
+  // }, [status, round1Status, round2Status]);
 
+  const getCurrentStatus = (start, end) => {
+    let now = new Date();
+    if (start > now && end > now) return "Upcoming";
+    if (start < now && end < now) return "Finished";
+    else return "Ongoing";
+  };
   const getStatus = () => {
-    let now = new Date().getTime();
-    let start = new Date(challenge.round1_start_ts).getTime();
-    let r1end = new Date(challenge.round1_end_ts).getTime();
-    let r2start = new Date(challenge.round2_start_ts).getTime();
-    let end = new Date(challenge.round2_end_ts).getTime();
-    let status = now > end ? "Finished" : now < start ? "Upcoming" : "Ongoing";
+    let status = getCurrentStatus(r1Start, r2End);
+    let r1status = getCurrentStatus(r1Start, r1End);
+    let r2status = getCurrentStatus(r2Start, r2End);
+    // console.log(r1Start, r2Start)
     setStatus(status);
-    let r1status =
-      now > r1end ? "Finished" : now < start ? "Upcoming" : "Ongoing";
     setRound1Status(r1status);
-    let r2status =
-      now > end ? "Finished" : now < r2start ? "Upcoming" : "Ongoing";
     setRound2Status(r2status);
   };
   return (
@@ -160,21 +232,6 @@ const CompetitionScreen = () => {
                 ) : (
                   <>
                     <h3>Already Started</h3>
-                    {!finished && (
-                      <CallbackRunner
-                        endTs={challenge.round2_end_ts}
-                        callback={() => {
-                          setFinished(true);
-                          setShowRound2(false);
-                        }}
-                      />
-                    )}
-                    {showRound1 && (
-                      <CallbackRunner
-                        endTs={challenge.round1_start_ts}
-                        callback={() => setShowRound1(false)}
-                      />
-                    )}
                   </>
                 )}
               </div>
@@ -200,6 +257,8 @@ const CompetitionScreen = () => {
             <Rounds
               showRound1={() => setShowRound1(true)}
               showRound2={() => setShowRound2(true)}
+              r1Completed={r1Completed}
+              r2Completed={r2Completed}
               round1Status={round1Status}
               round2Status={round2Status}
             />
@@ -208,9 +267,25 @@ const CompetitionScreen = () => {
       </section>
 
       <div className="footer-spacing"></div>
-      {participant?.id && showRound1 && (
-        <Round1Screen closeTest={() => setShowRound1(false)} />
+      {participant?.id && showRound1 && round1Status === "Ongoing" && (
+        <Round1Screen
+          closeTest={() => {
+            setR1Completed(true);
+            setShowRound1(false);
+          }}
+        />
       )}
+      {participant?.id &&
+        participant?.round1_status === "qualified" &&
+        showRound2 &&
+        round2Status === "Ongoing" && (
+          <Round2Screen
+            closeTest={() => {
+              setR2Completed(true);
+              setShowRound2(false);
+            }}
+          />
+        )}
     </>
   );
 };

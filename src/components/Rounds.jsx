@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { EventProvider } from "../context/eventContext";
 
-function Rounds({ showRound1, showRound2, round1Status, round2Status }) {
+function Rounds({
+  showRound1,
+  r1Completed,
+  r2Completed,
+  showRound2,
+  round1Status,
+  round2Status,
+}) {
   const { participant, setParticipant, challenge, setChallenge, allowRound1 } =
     EventProvider();
   //   const { isAuthenticated, token } = AuthProvider();
@@ -12,84 +19,132 @@ function Rounds({ showRound1, showRound2, round1Status, round2Status }) {
     <>
       <style>{style}</style>
 
-      <div class="competition-wrapper">
+      <div className="competition-wrapper">
         {participant.id ? (
-          <div class="competition-container">
+          <div className="competition-container">
             <p>
               Get ready to test your AI prompting skills in an intense battle of
               creativity!
             </p>
 
-            <div class="round-box-container">
-              <div class="round-box" id="round1">
-                <div class="round-title">Round 1</div>
-                {round1Status == "Upcoming" && (
+            <div className="round-box-container">
+              <div className="round-box" id="round1">
+                <div className="round-title">Round 1</div>
+                {round1Status === "Upcoming" && (
                   <>
                     <p>Click below to start Round 1.</p>
                     <button
-                      class="round-button cursor-not-allowed"
+                      className="round-button"
                       disabled={true}
+                      style={{
+                        cursor: "not-allowed",
+                        boxShadow: "none",
+                        background: "#34e9e9",
+                      }}
                     >
                       Upcoming
                     </button>
                   </>
                 )}
-                {round1Status == "Ongoing" && (
+                {round1Status === "Ongoing" && (
                   <>
                     <p>Click below to attempt Round 1.</p>
-                    <button
-                      onClick={showRound1}
-                      class="round-button hover:cursor-pointer cursor-pointer"
-                    >
-                      <span class="text-red-500">*</span> Attempt
-                    </button>
+                    {!r1Completed ? (
+                      <button
+                        onClick={showRound1}
+                        className="round-button hover:cursor-pointer cursor-pointer"
+                      >
+                        <span className="text-red-500">*</span> Attempt
+                      </button>
+                    ) : (
+                      <button
+                        className="round-button"
+                        style={{
+                          cursor: "not-allowed",
+                          boxShadow: "none",
+                          background: "#34e9e9",
+                        }}
+                        disabled={true}
+                      >
+                        Completed
+                      </button>
+                    )}
                   </>
                 )}
-                {round1Status == "Finished" && (
+                {round1Status === "Finished" && (
                   <>
                     <p>Round 1 is Over</p>
-                    <buttom
-                      class="round-button cursor-not-allowed"
+                    <button
+                      className="round-button"
                       disabled={true}
+                      style={{
+                        cursor: "not-allowed",
+                        boxShadow: "none",
+                        background: "#34e9e9",
+                      }}
                     >
                       Finished
-                    </buttom>
+                    </button>
                   </>
                 )}
               </div>
 
               {participant.round1_status === "qualified" ? (
-                <div class="round-box" id="round2">
-                  <div class="round-title">Round 2</div>
-                  {round2Status == "Upcoming" && (
+                <div className="round-box" id="round2">
+                  <div className="round-title">Round 2</div>
+                  {round2Status === "Upcoming" && (
                     <>
                       <p>Click below to start Round 2.</p>
                       <button
                         disabled={true}
-                        class="round-button cursor-not-allowed"
+                        className="round-button"
+                        style={{
+                          cursor: "not-allowed",
+                          boxShadow: "none",
+                          background: "#34e9e9",
+                        }}
                       >
                         Upcoming
                       </button>
                     </>
                   )}
-                  {round2Status == "Ongoing" && (
+                  {round2Status === "Ongoing" && (
                     <>
                       <p>Click below to attempt Round 2.</p>
-                      <button
-                        onClick={showRound2}
-                        class="round-button hover:cursor-pointer cursor-pointer"
-                      >
-                        <span class="text-red-500">*</span> Attempt
-                      </button>
+                      {!r2Completed ? (
+                        <button
+                          onClick={showRound2}
+                          className="round-button hover:cursor-pointer cursor-pointer"
+                        >
+                          <span className="text-red-500">*</span> Attempt
+                        </button>
+                      ) : (
+                        <button
+                          className="round-button"
+                          style={{
+                            cursor: "not-allowed",
+                            boxShadow: "none",
+                            background: "#34e9e9",
+                          }}
+                          disabled={true}
+                        >
+                          Completed
+                        </button>
+                      )}
                     </>
                   )}
 
-                  {round2Status == "Finished" && (
+                  {round2Status === "Finished" && (
                     <>
                       <p>Round 2 is Over</p>
                       <button
                         disabled={true}
-                        class="round-button cursor-not-allowed"
+                        className="round-button"
+                        style={{
+                          cursor: "not-allowed",
+                          boxShadow: "none",
+                          background: "#34e9e9",
+                        }}
                       >
                         Finished
                       </button>
@@ -98,8 +153,8 @@ function Rounds({ showRound1, showRound2, round1Status, round2Status }) {
                 </div>
               ) : (
                 round2Status !== "Upcoming" && (
-                  <div class="round-box" id="round2">
-                    <div class="round-title">Round 2</div>
+                  <div className="round-box" id="round2">
+                    <div className="round-title">Round 2</div>
 
                     <p>You haven't qualified Round 1.</p>
                   </div>

@@ -11,7 +11,7 @@ const CountdownTimer = ({ endTime, setStarted }) => {
         seconds: Math.floor((difference / 1000) % 60),
       };
     } else {
-      setStarted(true);
+      // setStarted(true);
       return { days: 0, hours: 0, minutes: 0, seconds: 0 };
     }
   };
@@ -20,7 +20,9 @@ const CountdownTimer = ({ endTime, setStarted }) => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
+      
+    const difference = new Date(endTime) - new Date();
+      difference > 0 && setTimeLeft(calculateTimeLeft());
     }, 1000);
 
     return () => clearInterval(timer);
