@@ -189,7 +189,7 @@ function SignupScreen({ isAuthenticated }) {
             message: response?.data?.message,
           },
         });
-      }
+      } else alert(response.data?.message);
     } catch (error) {
       console.log("Error while signing in: ", error);
       // if (error.name.includes("UserAlreadyAuthenticatedException")) {
@@ -407,11 +407,13 @@ function SignupScreen({ isAuthenticated }) {
               type="submit"
               className="btn btn-primary"
               style={
-                submitting ? {
-                  cursor: "not-allowed",
-                  boxShadow: "none",
-                  background: "#34e9e9",
-                }:{}
+                submitting
+                  ? {
+                      cursor: "not-allowed",
+                      boxShadow: "none",
+                      background: "#34e9e9",
+                    }
+                  : {}
               }
               disabled={submitting}
             >

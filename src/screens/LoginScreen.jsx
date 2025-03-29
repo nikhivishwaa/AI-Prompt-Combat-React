@@ -96,7 +96,7 @@ function LoginScreen({ isAuthenticated, getAuth }) {
             message: response?.data?.message,
           },
         });
-      }
+      } else alert(response.data?.message);
     } catch (error) {
       console.log("Error while signing in: ", error);
       // if (error.name.includes("UserAlreadyAuthenticatedException")) {
