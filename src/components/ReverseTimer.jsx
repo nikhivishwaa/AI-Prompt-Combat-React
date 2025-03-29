@@ -12,7 +12,7 @@ const ReverseTimer = ({
   );
 
   useEffect(() => {
-    if (timeLeft <= 0) {
+    if (timeLeft <= 1100) {
       return;
     }
     const timer = setInterval(() => {
