@@ -12,6 +12,7 @@ function LoginScreen({ isAuthenticated, getAuth }) {
   const [password, setPassword] = useState("");
   const [validPassword, setValidPassword] = useState(true);
   const [passwordError, setPasswordError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigate();
   const route = useLocation();
 
@@ -62,13 +63,14 @@ function LoginScreen({ isAuthenticated, getAuth }) {
       setValidPassword(true);
     }
   };
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     console.log("checking login form");
     validateEmail();
     validatePassword();
     if (validEmail && validPassword) {
       console.log({ email, password });
+      if (!confirm("Login")) return;
       setSubmitting(true);
       handleSignIn();
     }
@@ -86,6 +88,7 @@ function LoginScreen({ isAuthenticated, getAuth }) {
         }
       );
       if (response.status === 200) {
+        alert("You are logged in successfully");
         secureLocalStorage.setItem("auth", JSON.stringify(response.data.data));
         secureLocalStorage.setItem("lastLogin", new Date().getTime());
         getAuth();
@@ -99,15 +102,7 @@ function LoginScreen({ isAuthenticated, getAuth }) {
       } else alert(response.data?.message);
     } catch (error) {
       console.log("Error while signing in: ", error);
-      // if (error.name.includes("UserAlreadyAuthenticatedException")) {
-      //   cloudwatchLogger({
-      //     errorMessage: "Error while siginng in, login",
-      //     errorObject: {
-      //       message: error,
-      //       stack: error.stack,
-      //     },
-      //   });
-      // }
+      alert("Something went wrong. Try again!");
     } finally {
       setSubmitting(false);
     }
@@ -120,15 +115,6 @@ function LoginScreen({ isAuthenticated, getAuth }) {
       <div className="container d-flex justify-content-center align-items-center">
         <div className="card login-card">
           <h2 className="login-title">Login</h2>
-
-          {/* {% if messages %}
-        <div className="alert">
-            {% for message in messages %}
-            {{ message }}
-            {% endfor %}
-        </div>
-        {% endif %} */}
-
           <form onSubmit={handleSubmit}>
             <div className="input-group">
               <label htmlFor="email">Email / Mobile No.</label>
@@ -152,7 +138,7 @@ function LoginScreen({ isAuthenticated, getAuth }) {
               <label htmlFor="password">Password</label>
               <input
                 readOnly={submitting}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 placeholder="Enter your password"
                 value={password}
@@ -161,6 +147,22 @@ function LoginScreen({ isAuthenticated, getAuth }) {
                 style={{ borderColor: validPassword ? "#555" : "red" }}
                 onBlur={validatePassword}
               />
+              <div className="flex justify-start items-baseline my-1 mt-3 gap-1 w-full">
+                <input
+                  type="checkbox"
+                  checked={showPassword}
+                  onChange={(e) => setShowPassword((prev) => !prev)}
+                  id="show_password"
+                  style={{ boxShadow: "none", width: "fit-content" }}
+                />
+                <label
+                  htmlFor="show_password"
+                  className="text-[11px] self-center"
+                >
+                  Show Password
+                </label>
+              </div>
+
               <span className="block text-[12px] font-medium py-1 px-[10px] text-[red]">
                 {passwordError}
               </span>

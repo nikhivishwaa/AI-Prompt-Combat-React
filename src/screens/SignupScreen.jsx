@@ -5,6 +5,8 @@ import axios from "axios";
 
 function SignupScreen({ isAuthenticated }) {
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepassword, setShowRepassword] = useState(false);
   const [userInput, setUserInput] = useState({
     first_name: "",
     last_name: "",
@@ -42,21 +44,15 @@ function SignupScreen({ isAuthenticated }) {
   const handleChange = (e) => {
     setUserInput({ ...userInput, [e.target.name]: e.target.value });
   };
-  const handleError = (field, value) => {
-    setError({ ...error, [field]: value });
-  };
 
   // check first name
   const validateFname = () => {
     if (userInput.first_name.length < 3) {
-      handleError(
-        "first_nameError",
-        "First Name must have 3 or more characters"
-      );
+      return "First Name must have 3 or more characters";
     } else if (userInput.first_name.trim().search(/^[a-zA-Z]{3,}$/)) {
-      handleError("first_nameError", "First Name must have alphabets only");
+      return "First Name must have alphabets only";
     } else {
-      handleError("first_nameError", "");
+      return "";
     }
   };
   // check last name if given
@@ -67,106 +63,95 @@ function SignupScreen({ isAuthenticated }) {
         last_name.search(/^[a-z\sA-Z]{2,}$/) !== 0 ||
         last_name.search(/\s{2,}/) !== -1
       ) {
-        handleError(
-          "lnameError",
-          "Remove extra spaces or number from Last Name"
-        );
+        return "Remove extra spaces or number from Last Name";
       } else {
-        handleError("lnameError", "");
+        return "";
       }
     } else {
-      handleError("lnameError", "");
+      return "";
     }
   };
 
   // check gender
   const validateGender = () => {
-    if (!userInput.gender) handleError("genderError", "Please select gender");
-    else handleError("genderError", "");
+    if (!userInput.gender) return "Please select gender";
+    else return "";
   };
 
   // check email
   const validateEmail = () => {
-    if (!userInput.email.length)
-      handleError("emailError", "Please enter email");
+    if (!userInput.email.length) return "Please enter email";
     else if (!emailValidator(userInput.email))
-      handleError("emailError", "Please enter a valid email address");
+      return "Please enter a valid email address";
     else {
-      handleError("emailError", "");
+      return "";
     }
   };
 
   // check phone
   const validatePhone = () => {
-    if (!userInput.phone.length)
-      handleError("phoneError", "Please enter phone number");
+    if (!userInput.phone.length) return "Please enter phone number";
     else if (userInput.phone.search(/^\d{10}$/) === -1)
-      handleError("phoneError", "Please enter a valid phone number");
-    else handleError("phoneError", "");
+      return "Please enter a valid phone number";
+    else return "";
   };
 
   // check college
   const validateCollege = () => {
     if (userInput.college.trim().length < 3) {
-      handleError("collegeError", "Please enter college name properly");
+      return "Please enter college name properly";
     } else {
-      handleError("collegeError", "");
+      return "";
     }
   };
   // check password
   const validatePassword = () => {
     if (!userInput.password.length) {
-      handleError("passwordError", "Please enter password");
+      return "Please enter password";
     } else if (userInput.password.length < 8) {
-      handleError("passwordError", "Password must be 8 character long");
+      return "Password must be 8 character long";
     } else if (!passwordValidator(userInput.password)) {
-      handleError(
-        "password",
-        "Password must contain alphanumeric (a-z, A-Z, 0-9) and @, !, $, %, ^, &, *, (, ), +, -, ?, /"
-      );
+      return "Password must contain alphanumeric (a-z, A-Z, 0-9) and @, !, $, %, ^, &, *, (, ), +, -, ?, /";
     } else {
-      handleError("passwordError", "");
+      return "";
     }
   };
 
   // check confirm password
   const validateRepassword = () => {
     if (!userInput.confirm_password.length) {
-      handleError("repasswordError", "Please enter confirm password");
+      return "Please enter confirm password";
     } else if (userInput.confirm_password !== userInput.password) {
-      handleError(
-        "repasswordError",
-        "Confirm Password should be same as password"
-      );
-    } else if (
-      userInput.confirm_password === userInput.password &&
-      error.passwordError.length
-    ) {
-      handleError("repasswordError", error.passwordError);
+      return "Confirm Password should be same as password";
+    } else if (userInput.confirm_password === userInput.password) {
+      return validatePassword();
     } else {
-      handleError("repasswordError", "");
+      return "";
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (submitting) return;
     console.log("checking login form");
-    validateFname();
-    validateLname();
-    validateGender();
-    validatePhone();
-    validateEmail();
-    validateCollege();
-    validatePassword();
-    validateRepassword();
+    const checks = {};
+    checks.first_nameError = validateFname();
+    checks.lnameError = validateLname();
+    checks.genderError = validateGender();
+    checks.phoneError = validatePhone();
+    checks.emailError = validateEmail();
+    checks.collegeError = validateCollege();
+    checks.passwordError = validatePassword();
+    checks.repasswordError = validateRepassword();
 
+    setError(checks);
     let errorCount = 0;
-    for (const err in error) {
-      errorCount += error[err].length ? 1 : 0;
+    for (const err in checks) {
+      errorCount += checks[err].length ? 1 : 0;
     }
     if (!errorCount) {
       console.log(userInput);
+      if (!confirm("Create Account")) return;
       setSubmitting(true);
       handleSignUp();
     }
@@ -182,6 +167,7 @@ function SignupScreen({ isAuthenticated }) {
       });
       if (response.status === 201) {
         console.log(response.data);
+        alert("Account has been created. Login Now!");
         navigation("/login", {
           replace: true,
           state: {
@@ -192,15 +178,7 @@ function SignupScreen({ isAuthenticated }) {
       } else alert(response.data?.message);
     } catch (error) {
       console.log("Error while signing in: ", error);
-      // if (error.name.includes("UserAlreadyAuthenticatedException")) {
-      //   cloudwatchLogger({
-      //     errorMessage: "Error while siginng in, login",
-      //     errorObject: {
-      //       message: error,
-      //       stack: error.stack,
-      //     },
-      //   });
-      // }
+      alert("Something went wrong. Try again!");
     } finally {
       setSubmitting(false);
     }
@@ -214,14 +192,6 @@ function SignupScreen({ isAuthenticated }) {
         <div className="card signup-card">
           <h2 className="signup-title">Sign Up for AI Prompt Combat</h2>
 
-          {/* {% if messages %}
-        <div className="alert">
-            {% for message in messages %}
-            {{ message }}
-            {% endfor %}
-        </div>
-        {% endif %} */}
-
           <form onSubmit={handleSubmit}>
             <div className="input-group">
               <label htmlFor="first_name">First Name</label>
@@ -234,7 +204,6 @@ function SignupScreen({ isAuthenticated }) {
                 value={userInput.fna}
                 onChange={handleChange}
                 required={true}
-                onBlur={validateFname}
                 style={{
                   borderColor: !error.first_nameError.length ? "#555" : "red",
                 }}
@@ -253,7 +222,6 @@ function SignupScreen({ isAuthenticated }) {
                 placeholder="Enter your last name"
                 value={userInput?.last_name}
                 onChange={handleChange}
-                onBlur={validateLname}
                 style={{
                   borderColor: !error.lnameError.length ? "#555" : "red",
                 }}
@@ -310,7 +278,6 @@ function SignupScreen({ isAuthenticated }) {
                 value={userInput?.phone}
                 onChange={handleChange}
                 required={true}
-                onBlur={validatePhone}
                 style={{
                   borderColor: !error.phoneError.length ? "#555" : "red",
                 }}
@@ -330,7 +297,6 @@ function SignupScreen({ isAuthenticated }) {
                 value={userInput?.email}
                 onChange={handleChange}
                 required={true}
-                onBlur={validateEmail}
                 style={{
                   borderColor: !error.emailError.length ? "#555" : "red",
                 }}
@@ -351,7 +317,6 @@ function SignupScreen({ isAuthenticated }) {
                 value={userInput?.college}
                 onChange={handleChange}
                 required={true}
-                onBlur={validateCollege}
                 style={{
                   borderColor: !error.collegeError.length ? "#555" : "red",
                 }}
@@ -365,7 +330,7 @@ function SignupScreen({ isAuthenticated }) {
               <label htmlFor="password">Password</label>
               <input
                 readOnly={submitting}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 id="password"
                 placeholder="Enter your password"
@@ -375,8 +340,23 @@ function SignupScreen({ isAuthenticated }) {
                 style={{
                   borderColor: !error.passwordError.length ? "#555" : "red",
                 }}
-                onBlur={validatePassword}
               />
+
+              <div className="flex justify-start items-baseline my-1 mt-3 gap-1 w-full">
+                <input
+                  type="checkbox"
+                  checked={showPassword}
+                  onChange={(e) => setShowPassword((prev) => !prev)}
+                  id="show_password"
+                  style={{ boxShadow: "none", width: "fit-content" }}
+                />
+                <label
+                  htmlFor="show_password"
+                  className="text-[11px] self-center"
+                >
+                  Show Password
+                </label>
+              </div>
               <span className="block text-[12px] font-medium py-1 px-[10px] text-[red]">
                 {error.passwordError}
               </span>
@@ -386,18 +366,32 @@ function SignupScreen({ isAuthenticated }) {
               <label htmlFor="confirm_password">Confirm Password</label>
               <input
                 readOnly={submitting}
-                type="password"
+                type={showRepassword ? "text" : "password"}
                 name="confirm_password"
                 id="confirm_password"
                 placeholder="Confirm your password"
                 value={userInput?.confirm_password}
                 onChange={handleChange}
                 required={true}
-                onBlur={validateRepassword}
                 style={{
                   borderColor: !error.repasswordError.length ? "#555" : "red",
                 }}
               />
+              <div className="flex justify-start items-baseline my-1 mt-3 gap-1 w-full">
+                <input
+                  type="checkbox"
+                  checked={showRepassword}
+                  onChange={(e) => setShowRepassword((prev) => !prev)}
+                  id="show_repassword"
+                  style={{ boxShadow: "none", width: "fit-content" }}
+                />
+                <label
+                  htmlFor="show_repassword"
+                  className="text-[11px] self-center"
+                >
+                  Show Confirm Password
+                </label>
+              </div>
               <span className="block text-[12px] font-medium py-1 px-[10px] text-[red]">
                 {error?.repasswordError}
               </span>
