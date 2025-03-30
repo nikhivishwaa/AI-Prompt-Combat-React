@@ -55,9 +55,6 @@ function LoginScreen({ isAuthenticated, getAuth }) {
     if (!password.length) {
       setValidPassword(false);
       setPasswordError("Please enter password");
-    } else if (password.length < 8) {
-      setPasswordError("Password must be 8 character long");
-      setValidPassword(false);
     } else {
       setPasswordError("");
       setValidPassword(true);
@@ -70,7 +67,7 @@ function LoginScreen({ isAuthenticated, getAuth }) {
     validatePassword();
     if (validEmail && validPassword) {
       console.log({ email, password });
-      if (!confirm("Login")) return;
+      if (!confirm("Continue with Login?")) return;
       setSubmitting(true);
       handleSignIn();
     }
@@ -88,7 +85,7 @@ function LoginScreen({ isAuthenticated, getAuth }) {
         }
       );
       if (response.status === 200) {
-        alert("You are logged in successfully");
+        alert("✅ You logged in successfully.");
         secureLocalStorage.setItem("auth", JSON.stringify(response.data.data));
         secureLocalStorage.setItem("lastLogin", new Date().getTime());
         getAuth();
@@ -99,10 +96,10 @@ function LoginScreen({ isAuthenticated, getAuth }) {
             message: response?.data?.message,
           },
         });
-      } else alert(response.data?.message);
+      } else alert("🚫",response.data?.message);
     } catch (error) {
       console.log("Error while signing in: ", error);
-      alert("Something went wrong. Try again!");
+      alert("❌ Something went wrong. Try again!");
     } finally {
       setSubmitting(false);
     }

@@ -8,6 +8,7 @@ function LogoutScreen({ getAuth }) {
   useEffect(() => {
     secureLocalStorage.clear();
     getAuth();
+    alert('✅ You Logged out successfully');
     navigation("/login", { replace: true });
   }, []);
   return <div></div>;

@@ -6,22 +6,32 @@ import CallbackRunner from "../components/CallbackRunner";
 
 function ChallengeCard({ challenge }) {
   const [status, setStatus] = useState(null);
-  const [finished, setFinished] = useState(false);
-  const [started, setStarted] = useState(false);
+  const [startTs, setStartTs] = useState(new Date(challenge.round1_start_ts));
+  const [finisTs, setFinishTs] = useState(new Date(challenge.round2_end_ts));
   const navigation = useNavigate();
 
   useEffect(() => {
     getStatus();
+    const now = new Date();
+    const a = setTimeout(() => {
+      getStatus();
+      console.log("Start");
+    }, startTs - now + 100);
+    const b = setTimeout(() => {
+      getStatus();
+      console.log("End");
+    }, finisTs - now + 100);
+
+    return () => {
+      clearTimeout(a);
+      clearTimeout(b);
+    };
   }, []);
-  useEffect(() => {
-    getStatus();
-  }, [started, finished]);
 
   const getStatus = () => {
-    let now = new Date().getTime();
-    let start = new Date(challenge.round1_start_ts).getTime();
-    let end = new Date(challenge.round2_end_ts).getTime();
-    let status = now > end ? "Finished" : now < start ? "Upcoming" : "Ongoing";
+    let now = new Date();
+    let status =
+      now > finisTs ? "Finished" : now < startTs ? "Upcoming" : "Ongoing";
     setStatus(status);
   };
   return (
@@ -42,10 +52,6 @@ function ChallengeCard({ challenge }) {
             Sagar Institute of Science and Technology | Gandhinagar | Bhopal
           </p>
           <br />
-          {/* <div className="event-meta">
-                <span>📅 April 3, 2025</span>
-                <span>🏆 Prize Pool ₹ 7000</span>
-            </div>  */}
           <section className=" mx-auto flex w-[85%] flex-col items-baseline justify-center">
             <div className="flex w-full items-center justify-between">
               <span className="text-md">
@@ -60,17 +66,10 @@ function ChallengeCard({ challenge }) {
           {status !== "Finished" && (
             <div className="countdown-section mt-5 w-[85%] mx-auto">
               {status === "Upcoming" ? (
-                <CountdownTimer
-                  endTime={challenge.round1_start_ts}
-                  setStarted={setStarted}
-                />
+                <CountdownTimer endTime={challenge.round1_start_ts} />
               ) : (
                 <>
                   <h3>Already Started</h3>
-                  <CallbackRunner
-                    endTs={challenge.round2_end_ts}
-                    callback={() => setFinished(true)}
-                  />
                 </>
               )}
             </div>

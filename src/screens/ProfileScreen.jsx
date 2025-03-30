@@ -34,15 +34,6 @@ const ProfileScreen = () => {
         }
       } catch (error) {
         console.log("Error while signing in: ", error);
-        // if (error.name.includes("UserAlreadyAuthenticatedException")) {
-        //   cloudwatchLogger({
-        //     errorMessage: "Error while siginng in, login",
-        //     errorObject: {
-        //       message: error,
-        //       stack: error.stack,
-        //     },
-        //   });
-        // }
       }
     }
     isAuthenticated
@@ -112,7 +103,9 @@ const ProfileScreen = () => {
           </div>
         </div>
       ) : (
-        <div className="profile-container">Loading</div>
+        <div className="profile-container">
+          <div className="profile-card">Loading</div>
+        </div>
       )}
     </>
   );

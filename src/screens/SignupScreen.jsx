@@ -151,9 +151,11 @@ function SignupScreen({ isAuthenticated }) {
     }
     if (!errorCount) {
       console.log(userInput);
-      if (!confirm("Create Account")) return;
+      if (!confirm("Continue to Create Account")) return;
       setSubmitting(true);
       handleSignUp();
+    } else {
+      alert("⚠️ Please correct the details");
     }
   };
 
@@ -167,7 +169,7 @@ function SignupScreen({ isAuthenticated }) {
       });
       if (response.status === 201) {
         console.log(response.data);
-        alert("Account has been created. Login Now!");
+        alert("✅ Account has been created. Login Now!");
         navigation("/login", {
           replace: true,
           state: {
@@ -175,10 +177,10 @@ function SignupScreen({ isAuthenticated }) {
             message: response?.data?.message,
           },
         });
-      } else alert(response.data?.message);
+      } else alert("🚫", response.data?.message);
     } catch (error) {
       console.log("Error while signing in: ", error);
-      alert("Something went wrong. Try again!");
+      alert("❌ Something went wrong. Try again!");
     } finally {
       setSubmitting(false);
     }

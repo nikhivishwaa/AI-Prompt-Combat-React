@@ -30,15 +30,6 @@ const HomeScreen = ({ user }) => {
         }
       } catch (error) {
         console.log("Error while fetching events in: ", error);
-        // if (error.name.includes("UserAlreadyAuthenticatedException")) {
-        //   cloudwatchLogger({
-        //     errorMessage: "Error while siginng in, login",
-        //     errorObject: {
-        //       message: error,
-        //       stack: error.stack,
-        //     },
-        //   });
-        // }
       } finally {
         setLoading(false);
       }
