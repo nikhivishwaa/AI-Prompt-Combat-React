@@ -96,10 +96,12 @@ function LoginScreen({ isAuthenticated, getAuth }) {
             message: response?.data?.message,
           },
         });
-      } else alert("🚫",response.data?.message);
+      }
     } catch (error) {
       console.log("Error while signing in: ", error);
-      alert("❌ Something went wrong. Try again!");
+      alert(
+        `❌ ${response.data?.message || "Something went wrong. Try again!"}`
+      );
     } finally {
       setSubmitting(false);
     }

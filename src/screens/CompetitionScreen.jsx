@@ -101,15 +101,15 @@ const CompetitionScreen = () => {
     };
   }, []);
 
-  const joinChallenge = async () => {
+  const endRound1 = async (reason) => {
     const apiUrl = import.meta.env.VITE_BACKEND;
     try {
-      const response = await fetch(
+      const response = await axios.post(
         `${apiUrl}/challenge/${
           challenge.id || route?.state?.challenge_id
-        }/participation`,
+        }/round1/end`,
+        { participant: participant.id, reason },
         {
-          method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -117,15 +117,86 @@ const CompetitionScreen = () => {
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        setParticipant(data.data);
-        secureLocalStorage.setItem("participant", JSON.stringify(data.data));
-      } else {
-        console.error("Failed to join challenge:", response.statusText);
+      if (response.status === 200) {
+        updatedParticipant = response.data.data;
+        setParticipant(updatedParticipant);
+        secureLocalStorage.setItem(
+          "participant",
+          JSON.stringify(updatedParticipant)
+        );
+        if (reason === "completed") alert("✅ Your Round 1 was Ended.");
+        else if (reason === "tab-switch")
+          alert("🚫 Your Round 1 was Ended due to Tab Switch.");
+      }
+    } catch (error) {
+      console.error("Error while ending round 1:", error);
+      alert(
+        `❌ ${response.data?.message || "Something went wrong. Try again!"}`
+      );
+    }
+  };
+
+  const endRound2 = async (reason) => {
+    const apiUrl = import.meta.env.VITE_BACKEND;
+    try {
+      const response = await axios.post(
+        `${apiUrl}/challenge/${
+          challenge.id || route?.state?.challenge_id
+        }/round2/end`,
+        { participant: participant.id, reason },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        updatedParticipant = response.data.data;
+        setParticipant(updatedParticipant);
+        secureLocalStorage.setItem(
+          "participant",
+          JSON.stringify(updatedParticipant)
+        );
+        if (reason === "completed") alert("✅ Your Round 2 was Ended.");
+      }
+    } catch (error) {
+      console.error("Error while ending round 2:", error);
+      alert(
+        `❌ ${response.data?.message || "Something went wrong. Try again!"}`
+      );
+    }
+  };
+  const joinChallenge = async () => {
+    const apiUrl = import.meta.env.VITE_BACKEND;
+    try {
+      const response = await axios.post(
+        `${apiUrl}/challenge/${
+          challenge.id || route?.state?.challenge_id
+        }/participation`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setParticipant(response.data.data);
+        secureLocalStorage.setItem(
+          "participant",
+          JSON.stringify(response.data.data)
+        );
+        alert("✅ You have Participated in this Challenge Successfully");
       }
     } catch (error) {
       console.error("Error joining challenge:", error);
+      alert(
+        `❌ ${response.data?.message || "Something went wrong. Try again!"}`
+      );
     }
   };
 
