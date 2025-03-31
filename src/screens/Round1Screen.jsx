@@ -88,7 +88,6 @@ function Round1Screen({ closeTest, setShowRound1 }) {
     document.addEventListener("cut", disableCut);
     document.addEventListener("paste", disablePaste);
 
-    setTimeout(closeTest, new Date(challenge.round1_end_ts) - new Date());
     document.body.style.overflowY = "hidden";
 
     return () => {

@@ -65,7 +65,7 @@ const CompetitionScreen = () => {
       console.log("r1End");
     }, r1End - now + 100);
     const c = setTimeout(
-      getParticipant(),
+      () => getParticipant(),
       r2Start - now - 15000 - Math.round(Math.random() * 10000)
     );
     const d = setTimeout(() => {
