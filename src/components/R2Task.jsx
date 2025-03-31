@@ -27,7 +27,7 @@ function R2Task({ task, i }) {
       try {
         // compress the file if it is more than 2.5MB
         const compressedFile = await imageCompression(file, {
-          maxSizeMB: 5,
+          maxSizeMB: 2,
           useWebWorker: true,
         });
 
@@ -44,14 +44,16 @@ function R2Task({ task, i }) {
         console.error("Error compressing image:", error);
       }
     } else {
-      file.name = `TS_${new Date().getTime()}_${
+      const name = `TS_${new Date().getTime()}_${
         Math.random() * 1000
       }_${file.name.slice(-10)}`;
-      const img = URL.createObjectURL(file);
-      console.log({ file, img });
+      const lastModified = new Date();
+      const nfile = new File([file], name, { lastModified });
+      const img = URL.createObjectURL(nfile);
+      console.log({ nfile, img });
       setImageSrc(img);
-      setImage(file);
-    }
+      setImage(nfile);
+      }
   };
 
   async function handleSubmission(e) {
@@ -76,7 +78,7 @@ function R2Task({ task, i }) {
       form.append("image", image);
       form.append("participant", participant.id);
 
-      const response = await axios.post(
+      const response = await axios.postForm(
         `${apiUrl}/challenge/${challenge.id}/round2/${task.id}/`,
         form,
         {
