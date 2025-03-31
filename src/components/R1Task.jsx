@@ -23,7 +23,11 @@ function R1Task({ task, i }) {
   async function handleSubmission(e) {
     e.preventDefault();
     if (prompt.trim() === "") {
-      alert("Please write a prompt");
+      alert("⚠️ Please write a prompt");
+      return false;
+    }
+    if (prompt.trim().length < 30) {
+      alert("⚠️ Prompt should have atleast 30 characters.");
       return false;
     }
 
@@ -56,7 +60,7 @@ function R1Task({ task, i }) {
         );
         setRound1(updatedTask);
         secureLocalStorage.setItem("round1", JSON.stringify(updatedTask));
-        alert(`Task #${i} submitted successfully`);
+        alert(`✅ Task #${i} submitted successfully`);
       }
       if (response.status === 202) {
         console.log(response.data);
@@ -71,10 +75,11 @@ function R1Task({ task, i }) {
         );
         setRound1(updatedTask);
         secureLocalStorage.setItem("round1", JSON.stringify(updatedTask));
-        alert(`Task #${i} already submitted`);
+        alert(`⚠️ Task #${i} already submitted`);
       }
     } catch (error) {
       console.log("Error while submitting: ", error);
+      alert(`❌ Task #${i} is not submitted. Try again!`);
     } finally {
       setSubmitting(false);
     }

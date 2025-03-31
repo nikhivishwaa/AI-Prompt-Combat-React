@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import R1Task from "../components/R1Task";
 import { EventProvider } from "../context/eventContext";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
@@ -7,7 +6,7 @@ import { AuthProvider } from "../context/authContext";
 import R2Task from "../components/R2Task";
 import ReverseTimer from "../components/ReverseTimer";
 
-function Round1Screen({ closeTest }) {
+function Round1Screen({ closeTest, setShowRound2 }) {
   const [submit, setSubmit] = useState(false);
   const [loading, setLoading] = useState(true);
   const { token } = AuthProvider();
@@ -45,8 +44,17 @@ function Round1Screen({ closeTest }) {
 
     if (participant.round1_status === "qualified") {
       setLoading(true);
+      if (participant.round2_end_reason) {
+        setShowRound2(false);
+        return;
+      }
       getAllTask();
     }
+    const endTs = new Date(challenge.round2_end_ts);
+    const r2End = setTimeout(
+      () => closeTest("time-up"),
+      endTs - new Date() - 600
+    );
     const disableRightClick = (e) => e.preventDefault();
     const disableCopy = (e) => e.preventDefault();
     const disableCut = (e) => e.preventDefault();
@@ -61,28 +69,15 @@ function Round1Screen({ closeTest }) {
     document.body.style.overflowY = "hidden";
     return () => {
       document.body.style.overflowY = "";
+      clearTimeout(r2End);
+      // if (!participant.round2_end_reason) closeTest("tab-switch");
       document.removeEventListener("contextmenu", disableRightClick);
       document.removeEventListener("copy", disableCopy);
       document.removeEventListener("cut", disableCut);
       document.removeEventListener("paste", disablePaste);
     };
   }, []);
-  useEffect(() => {
-    // enableFullScreen();
-  }, [round2]);
 
-  const enableFullScreen = () => {
-    const element = document.documentElement;
-    if (element.requestFullscreen) {
-      element.requestFullscreen();
-    } else if (element.mozRequestFullScreen) {
-      element.mozRequestFullScreen();
-    } else if (element.webkitRequestFullscreen) {
-      element.webkitRequestFullscreen();
-    } else if (element.msRequestFullscreen) {
-      element.msRequestFullscreen();
-    }
-  };
   return (
     <>
       <style>{style}</style>
@@ -133,10 +128,14 @@ function Round1Screen({ closeTest }) {
 
             <div className="flex justify-center mt-5">
               <button
-                onClick={closeTest}
+                onClick={() => {
+                  if (!confirm("Are you sure? you want to end Round 2!"))
+                    return;
+                  closeTest("completed");
+                }}
                 class="register-btn w-fit-content mx-auto"
               >
-                Close
+                End Round 2
               </button>
             </div>
           </aside>

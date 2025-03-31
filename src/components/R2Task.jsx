@@ -4,6 +4,7 @@ import { EventProvider } from "../context/eventContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import secureLocalStorage from "react-secure-storage";
+import imageCompression from "browser-image-compression";
 
 function R2Task({ task, i }) {
   const [image, setImage] = useState(null);
@@ -20,18 +21,43 @@ function R2Task({ task, i }) {
       setImageSrc(task?.image);
     }
   }, []);
-  const handlePreview = (e)=> {
+  const handlePreview = async (e) => {
     const file = e.target.files[0];
-    console.log({file})
-    const img = URL.createObjectURL(file);
-    setImageSrc(img);
-    setImage(file);
-  }
+    if (file.size > 2621440) {
+      try {
+        // compress the file if it is more than 2.5MB
+        const compressedFile = await imageCompression(file, {
+          maxSizeMB: 5,
+          useWebWorker: true,
+        });
+
+        const lastModified = new Date();
+        const name = `TS_${new Date().getTime()}_${
+          Math.random() * 1000
+        }_${file.name.slice(-10)}`;
+        const nfile = new File([compressedFile], name, { lastModified });
+        const img = URL.createObjectURL(nfile);
+        console.log({ nfile, img });
+        setImageSrc(img);
+        setImage(nfile);
+      } catch (error) {
+        console.error("Error compressing image:", error);
+      }
+    } else {
+      file.name = `TS_${new Date().getTime()}_${
+        Math.random() * 1000
+      }_${file.name.slice(-10)}`;
+      const img = URL.createObjectURL(file);
+      console.log({ file, img });
+      setImageSrc(img);
+      setImage(file);
+    }
+  };
 
   async function handleSubmission(e) {
     e.preventDefault();
     if (!image) {
-      alert("Please upload an image");
+      alert("⚠️ Please upload an image");
       return false;
     }
 
@@ -67,8 +93,9 @@ function R2Task({ task, i }) {
             : t
         );
         setRound2(updatedTask);
+        setSubmit(true);
         secureLocalStorage.setItem("round2", JSON.stringify(updatedTask));
-        alert(`Task #${i} submitted successfully`);
+        alert(`✅ Task #${i} submitted successfully`);
       }
       if (response.status === 202) {
         console.log(response.data);
@@ -82,11 +109,13 @@ function R2Task({ task, i }) {
             : t
         );
         setRound2(updatedTask);
+        setSubmit(true);
         secureLocalStorage.setItem("round2", JSON.stringify(updatedTask));
-        alert(`Task #${i} already submitted`);
+        alert(`⚠️ Task #${i} already submitted`);
       }
     } catch (error) {
       console.log("Error while submitting: ", error);
+      alert(`❌ Task #${i} is not submitted. Try again!`);
     } finally {
       setSubmitting(false);
     }
@@ -104,14 +133,14 @@ function R2Task({ task, i }) {
         <div className="w-full">
           <div className="upload-box">
             <label className="form-label">Upload Your Image:</label>
-            {submit ? (
+            {submit || submitting ? (
               <input
                 type="file"
                 accept=".png, .jpg, .jpeg"
                 className="form-control file-input"
                 name="user_image"
                 onClick={(e) => e.preventDefault()}
-                readonly={true}
+                readOnly={true}
               />
             ) : (
               <input

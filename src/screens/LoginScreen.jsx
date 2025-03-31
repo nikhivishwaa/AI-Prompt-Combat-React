@@ -100,7 +100,7 @@ function LoginScreen({ isAuthenticated, getAuth }) {
     } catch (error) {
       console.log("Error while signing in: ", error);
       alert(
-        `❌ ${response.data?.message || "Something went wrong. Try again!"}`
+        `❌ ${error.response.data?.message || "Something went wrong. Try again!"}`
       );
     } finally {
       setSubmitting(false);

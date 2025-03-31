@@ -38,9 +38,6 @@ const CompetitionScreen = () => {
   const [r2End, setR2End] = useState(
     new Date(route?.state?.detail.round2_end_ts).getTime()
   );
-  const [timediff, setTimediff] = useState(0);
-  const [r1Completed, setR1Completed] = useState(false);
-  const [r2Completed, setR2Completed] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -51,17 +48,10 @@ const CompetitionScreen = () => {
       secureLocalStorage.setItem("challenge", detail);
       setTimeout(() => {
         getStatus();
-        r1Start - now > 0 && setShowRound1(true);
-        console.log("r1Start");
       }, 100);
       getParticipant();
     } else navigation("/");
 
-    const challengeStatus = JSON.parse(
-      secureLocalStorage.getItem(`event${challenge.id}_${r1Start}`)
-    );
-    setR1Completed(challengeStatus?.r1Completed || false);
-    setR2Completed(challengeStatus?.r2Completed || false);
     const now = new Date().getTime();
     console.log("load");
     const a = setTimeout(() => {
@@ -89,10 +79,6 @@ const CompetitionScreen = () => {
       console.log("r1End");
     }, r1End - now + 100);
     return () => {
-      secureLocalStorage.setItem(
-        `event${challenge.id}_${r1Start}`,
-        JSON.stringify({ r1Completed, r2Completed })
-      );
       clearTimeout(a);
       clearTimeout(b);
       clearTimeout(c);
@@ -104,10 +90,11 @@ const CompetitionScreen = () => {
   const endRound1 = async (reason) => {
     const apiUrl = import.meta.env.VITE_BACKEND;
     try {
+      console.log({ reason });
       const response = await axios.post(
         `${apiUrl}/challenge/${
           challenge.id || route?.state?.challenge_id
-        }/round1/end`,
+        }/end/round1`,
         { participant: participant.id, reason },
         {
           headers: {
@@ -118,21 +105,25 @@ const CompetitionScreen = () => {
       );
 
       if (response.status === 200) {
-        updatedParticipant = response.data.data;
+        const updatedParticipant = response.data.data;
         setParticipant(updatedParticipant);
         secureLocalStorage.setItem(
           "participant",
           JSON.stringify(updatedParticipant)
         );
+        setShowRound1(false);
         if (reason === "completed") alert("✅ Your Round 1 was Ended.");
         else if (reason === "tab-switch")
           alert("🚫 Your Round 1 was Ended due to Tab Switch.");
       }
     } catch (error) {
       console.error("Error while ending round 1:", error);
-      alert(
-        `❌ ${response.data?.message || "Something went wrong. Try again!"}`
-      );
+      if (reason === "completed")
+        alert(
+          `❌ ${
+            error.response.data?.message || "Something went wrong. Try again!"
+          }`
+        );
     }
   };
 
@@ -142,7 +133,7 @@ const CompetitionScreen = () => {
       const response = await axios.post(
         `${apiUrl}/challenge/${
           challenge.id || route?.state?.challenge_id
-        }/round2/end`,
+        }/end/round2`,
         { participant: participant.id, reason },
         {
           headers: {
@@ -153,19 +144,23 @@ const CompetitionScreen = () => {
       );
 
       if (response.status === 200) {
-        updatedParticipant = response.data.data;
+        const updatedParticipant = response.data.data;
         setParticipant(updatedParticipant);
         secureLocalStorage.setItem(
           "participant",
           JSON.stringify(updatedParticipant)
         );
+        setShowRound1(false);
         if (reason === "completed") alert("✅ Your Round 2 was Ended.");
       }
     } catch (error) {
       console.error("Error while ending round 2:", error);
-      alert(
-        `❌ ${response.data?.message || "Something went wrong. Try again!"}`
-      );
+      if (reason === "completed")
+        alert(
+          `❌ ${
+            error.response.data?.message || "Something went wrong. Try again!"
+          }`
+        );
     }
   };
   const joinChallenge = async () => {
@@ -184,7 +179,7 @@ const CompetitionScreen = () => {
         }
       );
 
-      if (response.status === 200) {
+      if (response.status === 201) {
         setParticipant(response.data.data);
         secureLocalStorage.setItem(
           "participant",
@@ -192,10 +187,20 @@ const CompetitionScreen = () => {
         );
         alert("✅ You have Participated in this Challenge Successfully");
       }
+      if (response.status === 200) {
+        setParticipant(response.data.data);
+        secureLocalStorage.setItem(
+          "participant",
+          JSON.stringify(response.data.data)
+        );
+        alert("✅ You have Already Participated in this Challenge");
+      }
     } catch (error) {
       console.error("Error joining challenge:", error);
       alert(
-        `❌ ${response.data?.message || "Something went wrong. Try again!"}`
+        `❌ ${
+          error.response.data?.message || "Something went wrong. Try again!"
+        }`
       );
     }
   };
@@ -250,7 +255,7 @@ const CompetitionScreen = () => {
     let status = getCurrentStatus(r1Start, r2End);
     let r1status = getCurrentStatus(r1Start, r1End);
     let r2status = getCurrentStatus(r2Start, r2End);
-    // console.log(r1Start, r2Start)
+
     setStatus(status);
     setRound1Status(r1status);
     setRound2Status(r2status);
@@ -276,11 +281,7 @@ const CompetitionScreen = () => {
               Sagar Institute of Science and Technology | Gandhinagar | Bhopal
             </p>
             <br />
-            {/* <div className="event-meta">
-                <span>📅 April 3, 2025</span>
-                <span>🏆 Prize Pool ₹ 7000</span>
-            </div> */}
-            <section className=" mx-auto flex w-[85%] flex-col items-baseline justify-center">
+            <section className="mx-auto flex w-[85%] flex-col items-baseline justify-center">
               <div className="flex w-full items-center justify-between">
                 <span className="text-md">
                   From : {formatDate(challenge.round1_start_ts)}
@@ -296,10 +297,7 @@ const CompetitionScreen = () => {
             {status !== "Finished" && (
               <div className="countdown-section mt-5 w-[85%] mx-auto">
                 {status === "Upcoming" ? (
-                  <CountdownTimer
-                    endTime={challenge.round1_start_ts}
-                    setStarted={setStarted}
-                  />
+                  <CountdownTimer endTime={challenge.round1_start_ts} />
                 ) : (
                   <>
                     <h3>Already Started</h3>
@@ -310,7 +308,10 @@ const CompetitionScreen = () => {
             {(status === "Upcoming" || round1Status === "Ongoing") &&
               !participant?.id && (
                 <button
-                  onClick={joinChallenge}
+                  onClick={() => {
+                    if (!confirm("You want to Participate in this ?")) return;
+                    joinChallenge();
+                  }}
                   className="register-btn w-fit-content mx-auto"
                   disabled={
                     new Date(challenge.round1_end_ts) - 1000 < new Date()
@@ -328,8 +329,6 @@ const CompetitionScreen = () => {
             <Rounds
               showRound1={() => setShowRound1(true)}
               showRound2={() => setShowRound2(true)}
-              r1Completed={r1Completed}
-              r2Completed={r2Completed}
               round1Status={round1Status}
               round2Status={round2Status}
             />
@@ -338,24 +337,18 @@ const CompetitionScreen = () => {
       </section>
 
       <div className="footer-spacing"></div>
-      {participant?.id && showRound1 && round1Status === "Ongoing" && (
-        <Round1Screen
-          closeTest={() => {
-            setR1Completed(true);
-            setShowRound1(false);
-          }}
-        />
-      )}
       {participant?.id &&
+        !participant.round1_end_reason &&
+        showRound1 &&
+        round1Status === "Ongoing" && (
+          <Round1Screen closeTest={endRound1} setShowRound1={setShowRound1} />
+        )}
+      {participant?.id &&
+        !participant.round2_end_reason &&
         participant?.round1_status === "qualified" &&
         showRound2 &&
         round2Status === "Ongoing" && (
-          <Round2Screen
-            closeTest={() => {
-              setR2Completed(true);
-              setShowRound2(false);
-            }}
-          />
+          <Round2Screen closeTest={endRound2} setShowRound2={setShowRound2} />
         )}
     </>
   );

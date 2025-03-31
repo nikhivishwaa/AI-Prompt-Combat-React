@@ -1,20 +1,8 @@
 import React, { useState } from "react";
 import { EventProvider } from "../context/eventContext";
 
-function Rounds({
-  showRound1,
-  r1Completed,
-  r2Completed,
-  showRound2,
-  round1Status,
-  round2Status,
-}) {
-  const { participant, setParticipant, challenge, setChallenge, allowRound1 } =
-    EventProvider();
-  //   const { isAuthenticated, token } = AuthProvider();
-  const [status, setStatus] = useState(null);
-  const [finished, setFinished] = useState(false);
-  const [started, setStarted] = useState(false);
+function Rounds({ showRound1, showRound2, round1Status, round2Status }) {
+  const { participant, challenge } = EventProvider();
   return (
     <>
       <style>{style}</style>
@@ -49,7 +37,7 @@ function Rounds({
                 {round1Status === "Ongoing" && (
                   <>
                     <p>Click below to attempt Round 1.</p>
-                    {!r1Completed ? (
+                    {!participant.round1_end_reason ? (
                       <button
                         onClick={showRound1}
                         className="round-button hover:cursor-pointer cursor-pointer"
@@ -111,7 +99,7 @@ function Rounds({
                   {round2Status === "Ongoing" && (
                     <>
                       <p>Click below to attempt Round 2.</p>
-                      {!r2Completed ? (
+                      {!participant.round2_end_reason ? (
                         <button
                           onClick={showRound2}
                           className="round-button hover:cursor-pointer cursor-pointer"
@@ -165,7 +153,7 @@ function Rounds({
         ) : (
           <div className="competition-container">
             <h1 className="text-center">
-              you haven't Participated in this Competition Yet
+              you haven't Participated in this Competition
             </h1>
           </div>
         )}

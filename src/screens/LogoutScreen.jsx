@@ -1,17 +1,20 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import secureLocalStorage from "react-secure-storage";
 
 function LogoutScreen({ getAuth }) {
   const navigation = useNavigate();
+  const home = useRef();
 
   useEffect(() => {
     secureLocalStorage.clear();
-    getAuth();
-    alert('✅ You Logged out successfully');
-    navigation("/login", { replace: true });
+    home.current.click();
   }, []);
-  return <div></div>;
+  return (
+    <div>
+      <a href="/" ref={home}></a>
+    </div>
+  );
 }
 
 export default LogoutScreen;

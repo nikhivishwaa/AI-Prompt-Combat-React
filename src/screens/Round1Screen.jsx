@@ -6,7 +6,7 @@ import secureLocalStorage from "react-secure-storage";
 import { AuthProvider } from "../context/authContext";
 import ReverseTimer from "../components/ReverseTimer";
 
-function Round1Screen({ closeTest }) {
+function Round1Screen({ closeTest, setShowRound1 }) {
   const [submit, setSubmit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastTimout, setLastTimout] = useState(null);
@@ -52,7 +52,16 @@ function Round1Screen({ closeTest }) {
     }
 
     setLoading(true);
+    if (participant.round1_end_reason) {
+      setShowRound1(false);
+      return;
+    }
     getAllTask();
+    const endTs = new Date(challenge.round1_end_ts);
+    const r1End = setTimeout(
+      () => closeTest("time-up"),
+      endTs - new Date() - 600
+    );
     const disableRightClick = (e) => e.preventDefault();
     const disableCopy = (e) => e.preventDefault();
     const disableCut = (e) => e.preventDefault();
@@ -68,6 +77,7 @@ function Round1Screen({ closeTest }) {
 
     return () => {
       document.body.style.overflowY = "";
+      clearTimeout(r1End);
       document.removeEventListener("contextmenu", disableRightClick);
       document.removeEventListener("copy", disableCopy);
       document.removeEventListener("cut", disableCut);
@@ -77,30 +87,11 @@ function Round1Screen({ closeTest }) {
   useEffect(() => {
     const handleVisibilityChange = (e) => {
       e.stopPropagation();
-      if (tabSwitch > 2) {
-        return;
-      }
       if (document.hidden) {
-        if (tabSwitch > 2) {
-          setAllowRound1(false);
-          secureLocalStorage.setItem("tabSwitch", tabSwitch);
-          secureLocalStorage.setItem("allowRound1", false);
-          setTimeout(() => {
-            endTask;
-            alert(
-              "Multiple Tab switch detected! Therefore your competition was ended!"
-            );
-          }, 1500);
-          return;
-        }
-        const upcomingWarning = setTimeout(() => {
-          setTabSwitch(tabSwitch + 1);
-          alert("Tab switch detected! Please stay on this page.");
-        }, 1000);
-        if (lastTimout) {
-          clearTimeout(lastTimout);
-          setLastTimout(upcomingWarning);
-        }
+        console.log({ tabSwitch });
+        setTimeout(() => {
+          setTabSwitch((prev) => prev + 1);
+        }, 80);
       }
     };
 
@@ -108,19 +99,32 @@ function Round1Screen({ closeTest }) {
     enableFullScreen();
 
     return () =>
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [round1]);
 
+  useEffect(() => {
+    if (tabSwitch >= 2) {
+      console.log({ tabSwitch });
+      closeTest("tab-switch");
+    } else {
+      tabSwitch && alert("⚠️ Tab switch detected! Please stay on this page.");
+    }
+  }, [tabSwitch]);
+
   const enableFullScreen = () => {
-    const element = document.documentElement;
-    if (element.requestFullscreen) {
-      element.requestFullscreen();
-    } else if (element.mozRequestFullScreen) {
-      element.mozRequestFullScreen();
-    } else if (element.webkitRequestFullscreen) {
-      element.webkitRequestFullscreen();
-    } else if (element.msRequestFullscreen) {
-      element.msRequestFullscreen();
+    try {
+      const element = document.documentElement;
+      if (element.requestFullscreen) {
+        element.requestFullscreen();
+      } else if (element.mozRequestFullScreen) {
+        element.mozRequestFullScreen();
+      } else if (element.webkitRequestFullscreen) {
+        element.webkitRequestFullscreen();
+      } else if (element.msRequestFullscreen) {
+        element.msRequestFullscreen();
+      }
+    } catch (error) {
+      console.log("Error enabling full screen: ", error);
     }
   };
   return (
@@ -136,7 +140,7 @@ function Round1Screen({ closeTest }) {
         }}
       >
         <div className="level-container">
-          {tabSwitch <= 2 ? (
+          {tabSwitch < 2 ? (
             <section className="prompt-card" id="prompt-card">
               {round1.map((task, i) => (
                 <R1Task task={task} i={i + 1} key={i} />
@@ -176,10 +180,14 @@ function Round1Screen({ closeTest }) {
             </div>
             <div className="flex justify-center mt-5">
               <button
-                onClick={closeTest}
+                onClick={() => {
+                  if (!confirm("Are you sure? you want to end Round 1!"))
+                    return;
+                  closeTest("completed");
+                }}
                 className="register-btn w-fit-content mx-auto"
               >
-                Close
+                End Round 1
               </button>
             </div>
           </aside>
