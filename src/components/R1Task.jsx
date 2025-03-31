@@ -109,7 +109,7 @@ function R1Task({ task, i }) {
               type="submit"
               className="btn-primary"
               style={
-                task?.evaluated || prompt?.length < 30 || submit || submitting
+                task?.evaluated || submit || submitting
                   ? {
                       cursor: "not-allowed",
                       boxShadow: "none",
@@ -118,7 +118,7 @@ function R1Task({ task, i }) {
                   : { cursor: "pointer" }
               }
               disabled={
-                task?.evaluated || prompt?.length < 30 || submit || submitting
+                task?.evaluated || submit || submitting
               }
             >
               Submit
