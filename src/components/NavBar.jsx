@@ -4,7 +4,6 @@ import { Link, useLocation } from "react-router-dom";
 const Navbar = ({ isAuthenticated }) => {
   const [menuActive, setMenuActive] = useState(false);
   const route = useLocation();
-  console.log({ route });
   useEffect(() => {
     const handleOverlayClick = () => setMenuActive(false);
     document

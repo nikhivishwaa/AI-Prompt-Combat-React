@@ -44,6 +44,14 @@ function Round1Screen({ closeTest, setShowRound2 }) {
 
     if (participant.round1_status === "qualified") {
       setLoading(true);
+      const r2exists = secureLocalStorage.getItem(
+        `e-${challenge.id}-${participant.id}-TS_${new Date(
+          challenge.round2_start_ts
+        ).getTime()}`
+      );
+      if (r2exists) {
+        closeTest("window-exit");
+      }
       if (participant.round2_end_reason) {
         setShowRound2(false);
         return;
@@ -54,6 +62,14 @@ function Round1Screen({ closeTest, setShowRound2 }) {
     const r2End = setTimeout(
       () => closeTest("time-up"),
       endTs - new Date() - 600
+    );
+
+    // set the round 2 started
+    secureLocalStorage.setItem(
+      `e-${challenge.id}-${participant.id}-TS_${new Date(
+        challenge.round2_start_ts
+      ).getTime()}`,
+      true
     );
     const disableRightClick = (e) => e.preventDefault();
     const disableCopy = (e) => e.preventDefault();
@@ -92,9 +108,8 @@ function Round1Screen({ closeTest, setShowRound2 }) {
       >
         <div className="level-container">
           <section className="prompt-card" id="prompt-card">
-            {round2.map((task, i) => (
-              <R2Task task={task} i={i + 1} key={i} />
-            ))}
+            {!loading &&
+              round2.map((task, i) => <R2Task task={task} i={i + 1} key={i} />)}
           </section>
 
           <aside className="flex flex-col gap-1 sidebar-container self-start w-[94%] mr-auto">
@@ -112,14 +127,15 @@ function Round1Screen({ closeTest, setShowRound2 }) {
                 </tr>
               </thead>
               <tbody>
-                {round2.map((task, i) => (
-                  <tr key={i}>
-                    <td>
-                      <button onClick={() => {}}>Task # {i + 1}</button>
-                    </td>
-                    <td>{task?.evaluated ? `✅` : "-"}</td>
-                  </tr>
-                ))}
+                {!loading &&
+                  round2.map((task, i) => (
+                    <tr key={i}>
+                      <td>
+                        <button onClick={() => {}}>Task # {i + 1}</button>
+                      </td>
+                      <td>{task?.evaluated ? `✅` : "-"}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
             <div className="my-4">

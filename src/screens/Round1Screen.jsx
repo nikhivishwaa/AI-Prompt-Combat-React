@@ -51,6 +51,15 @@ function Round1Screen({ closeTest, setShowRound1 }) {
       }
     }
 
+    const r1exists = secureLocalStorage.getItem(
+      `e-${challenge.id}-${participant.id}-TS_${new Date(
+        challenge.round1_start_ts
+      ).getTime()}`
+    );
+    if (r1exists) {
+      closeTest("window-exit");
+    }
+
     setLoading(true);
     if (participant.round1_end_reason) {
       setShowRound1(false);
@@ -61,6 +70,13 @@ function Round1Screen({ closeTest, setShowRound1 }) {
     const r1End = setTimeout(
       () => closeTest("time-up"),
       endTs - new Date() - 600
+    );
+    // set the round 1 started
+    secureLocalStorage.setItem(
+      `e-${challenge.id}-${participant.id}-TS_${new Date(
+        challenge.round1_start_ts
+      ).getTime()}`,
+      true
     );
     const disableRightClick = (e) => e.preventDefault();
     const disableCopy = (e) => e.preventDefault();
@@ -78,6 +94,7 @@ function Round1Screen({ closeTest, setShowRound1 }) {
     return () => {
       document.body.style.overflowY = "";
       clearTimeout(r1End);
+      console.log({ closed: "yes" });
       document.removeEventListener("contextmenu", disableRightClick);
       document.removeEventListener("copy", disableCopy);
       document.removeEventListener("cut", disableCut);
@@ -142,9 +159,10 @@ function Round1Screen({ closeTest, setShowRound1 }) {
         <div className="level-container">
           {tabSwitch < 2 ? (
             <section className="prompt-card" id="prompt-card">
-              {round1.map((task, i) => (
-                <R1Task task={task} i={i + 1} key={i} />
-              ))}
+              {!loading &&
+                round1.map((task, i) => (
+                  <R1Task task={task} i={i + 1} key={i} />
+                ))}
             </section>
           ) : (
             <h1 className="text-[28px] justify-self-center font-bold">
@@ -165,14 +183,15 @@ function Round1Screen({ closeTest, setShowRound1 }) {
                 </tr>
               </thead>
               <tbody>
-                {round1.map((task, i) => (
-                  <tr key={i}>
-                    <td>
-                      <button onClick={() => {}}>Task # {i + 1}</button>
-                    </td>
-                    <td>{task?.evaluated ? `✅` : "-"}</td>
-                  </tr>
-                ))}
+                {!loading &&
+                  round1.map((task, i) => (
+                    <tr key={i}>
+                      <td>
+                        <button onClick={() => {}}>Task # {i + 1}</button>
+                      </td>
+                      <td>{task?.evaluated ? `✅` : "-"}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
             <div className="my-4">

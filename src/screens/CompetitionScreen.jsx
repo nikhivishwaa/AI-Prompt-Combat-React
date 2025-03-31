@@ -62,22 +62,22 @@ const CompetitionScreen = () => {
     const b = setTimeout(() => {
       getStatus();
       setShowRound1(false);
-      console.log("r2Start");
-    }, r2Start - now + 100);
+      console.log("r1End");
+    }, r1End - now + 100);
     const c = setTimeout(
-      getParticipant,
-      r2Start - now - 10000 - Math.round(Math.random() * 10000)
+      getParticipant(),
+      r2Start - now - 15000 - Math.round(Math.random() * 10000)
     );
     const d = setTimeout(() => {
       getStatus();
       r2Start - now > 0 && setShowRound2(true);
-      console.log("r1End");
-    }, r1End - now + 100);
+      console.log("r2Start");
+    }, r2Start - now + 100);
     const e = setTimeout(() => {
       getStatus();
       setShowRound2(false);
-      console.log("r1End");
-    }, r1End - now + 100);
+      console.log("r2End");
+    }, r2End - now + 100);
     return () => {
       clearTimeout(a);
       clearTimeout(b);
@@ -115,6 +115,14 @@ const CompetitionScreen = () => {
         if (reason === "completed") alert("✅ Your Round 1 was Ended.");
         else if (reason === "tab-switch")
           alert("🚫 Your Round 1 was Ended due to Tab Switch.");
+        else if (reason === "window-exit") {
+          secureLocalStorage.removeItem(
+            `e-${challenge.id}-${participant.id}-TS_${r1Start}`
+          );
+          alert(
+            "🚫 Your Round 1 was Ended due to Exiting from Challenge Window."
+          );
+        }
       }
     } catch (error) {
       console.error("Error while ending round 1:", error);
@@ -152,6 +160,14 @@ const CompetitionScreen = () => {
         );
         setShowRound1(false);
         if (reason === "completed") alert("✅ Your Round 2 was Ended.");
+        else if (reason === "window-exit") {
+          secureLocalStorage.removeItem(
+            `e-${challenge.id}-${participant.id}-TS_${r2Start}`
+          );
+          alert(
+            "🚫 Your Round 2 was Ended due to Exiting from Challenge Window."
+          );
+        }
       }
     } catch (error) {
       console.error("Error while ending round 2:", error);
