@@ -18,7 +18,7 @@ const CompetitionScreen = () => {
   const { participant, setParticipant, challenge, setChallenge, allowRound1 } =
     EventProvider();
   const { isAuthenticated, token } = AuthProvider();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(null);
   const [finished, setFinished] = useState(false);
   const [started, setStarted] = useState(false);
@@ -56,7 +56,7 @@ const CompetitionScreen = () => {
     console.log("load");
     const a = setTimeout(() => {
       getStatus();
-      r1Start - now > 0 && setShowRound1(true);
+      if (r1Start - now > 0) alert("Round 1 Started");
       console.log("r1Start");
     }, r1Start - now + 100);
     const b = setTimeout(() => {
@@ -66,12 +66,14 @@ const CompetitionScreen = () => {
     }, r1End - now + 100);
     const c = setTimeout(
       () => getParticipant(),
-      r2Start - now - 15000 - Math.round(Math.random() * 10000)
+      r2Start - now - 25000 - Math.round(Math.random() * 10000)
     );
     const d = setTimeout(() => {
       getStatus();
-      r2Start - now > 0 && setShowRound2(true);
-      console.log("r2Start");
+      if (participant.round1_status === "qualified") {
+        if (r2Start - now > 0) alert("Round 2 Started");
+        console.log("r2Start");
+      } else getParticipant();
     }, r2Start - now + 100);
     const e = setTimeout(() => {
       getStatus();
@@ -322,7 +324,7 @@ const CompetitionScreen = () => {
               </div>
             )}
             {(status === "Upcoming" || round1Status === "Ongoing") &&
-              !participant?.id && (
+              !participant?.id && !loading && (
                 <button
                   onClick={() => {
                     if (!confirm("You want to Participate in this ?")) return;

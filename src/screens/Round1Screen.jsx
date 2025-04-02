@@ -44,6 +44,17 @@ function Round1Screen({ closeTest, setShowRound1 }) {
         secureLocalStorage.setItem("round1", JSON.stringify(data.data));
         console.log(data);
         setRound1(data.data);
+        // set the round 1 started
+        setTimeout(
+          () =>
+            secureLocalStorage.setItem(
+              `e-${challenge.id}-${participant.id}-TS_${new Date(
+                challenge.round1_start_ts
+              ).getTime()}`,
+              true
+            ),
+          5000
+        );
       } catch (error) {
         console.error("Error while fetching tasks: ", error);
       } finally {
@@ -70,13 +81,6 @@ function Round1Screen({ closeTest, setShowRound1 }) {
     const r1End = setTimeout(
       () => closeTest("time-up"),
       endTs - new Date() - 600
-    );
-    // set the round 1 started
-    secureLocalStorage.setItem(
-      `e-${challenge.id}-${participant.id}-TS_${new Date(
-        challenge.round1_start_ts
-      ).getTime()}`,
-      true
     );
     const disableRightClick = (e) => e.preventDefault();
     const disableCopy = (e) => e.preventDefault();
