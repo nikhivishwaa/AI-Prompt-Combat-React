@@ -66,7 +66,7 @@ const CompetitionScreen = () => {
     }, r1End - now + 100);
     const c = setTimeout(
       () => getParticipant(),
-      r2Start - now - 25000 - Math.round(Math.random() * 10000)
+      r2Start - now - 15000 - Math.round(Math.random() * 10000)
     );
     const d = setTimeout(() => {
       getStatus();
@@ -249,6 +249,7 @@ const CompetitionScreen = () => {
           const data = await response.json();
           setParticipant(data.data);
           secureLocalStorage.setItem("participant", JSON.stringify(data.data));
+          getStatus();
         } else {
           console.error("Failed to fetch participant:", response.statusText);
         }
@@ -324,7 +325,8 @@ const CompetitionScreen = () => {
               </div>
             )}
             {(status === "Upcoming" || round1Status === "Ongoing") &&
-              !participant?.id && !loading && (
+              !participant?.id &&
+              !loading && (
                 <button
                   onClick={() => {
                     if (!confirm("You want to Participate in this ?")) return;
